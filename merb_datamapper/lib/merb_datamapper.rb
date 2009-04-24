@@ -57,7 +57,7 @@ if defined?(Merb::Plugins)
       Merb.logger.verbose! 'Merb::Orms::DataMapper::Associations block'
 
       # make sure all relationships are initialized after loading
-      descendants = DataMapper::Resource.descendants.dup
+      descendants = DataMapper::Model.descendants.dup
       descendants.dup.each do |model|
         descendants.merge(model.descendants) if model.respond_to?(:descendants)
       end
@@ -87,21 +87,4 @@ if defined?(Merb::Plugins)
   Merb.add_generators generators / 'data_mapper_resource_controller'
   Merb.add_generators generators / 'data_mapper_migration'
   
-  # Override bug in DM::Timestamps
-  Merb::BootLoader.after_app_loads do
-    module DataMapper
-      module Timestamp
-        private
-        
-        def set_timestamps
-          return unless dirty? || ActionORM.for(self).new_record?
-          TIMESTAMP_PROPERTIES.each do |name,(_type,proc)|
-            if model.properties.has_property?(name)
-              model.properties[name].set(self, proc.call(self, model.properties[name])) unless attribute_dirty?(name)
-            end
-          end
-        end
-      end
-    end
-  end
 end
